@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# setup.sh – Install PrintGuard dependencies on Raspberry Pi 5 (Pi OS Bookworm)
-# Run once as a regular user (sudo is invoked internally where needed):
+# setup.sh – Install PrintGuard dependencies on Raspberry Pi 5
+# Tested on: Debian Trixie (Raspberry Pi OS based on Debian 13)
+# Run as a regular user (sudo is invoked internally where needed):
 #   chmod +x setup.sh && ./setup.sh
 
 set -euo pipefail
@@ -25,9 +26,9 @@ sudo apt-get install -y --no-install-recommends \
     python3-opencv \
     python3-picamera2 \
     libopenblas-dev \
-    libatlas-base-dev \
     libjpeg-dev \
     libpng-dev \
+    libgl1 \
     wget \
     curl
 
