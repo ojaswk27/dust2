@@ -1,0 +1,74 @@
+# PrintGuard configuration
+# Copy this file to config.local.yaml and fill in your values.
+# config.local.yaml is .gitignored so secrets stay off the repo.
+
+# ── Bambu Lab printer ────────────────────────────────────────────────────────
+bambu:
+  ip: "192.168.1.XXX"          # LAN IP of your Bambu printer
+  device_id: "XXXXXXXXXX"      # Serial / device ID shown in Bambu Studio
+  access_code: "XXXXXXXX"      # 8-char LAN access code (printer touchscreen → Settings → Network)
+  # action when failure detected: "pause" or "stop"
+  on_failure: "pause"
+
+# ── Camera ───────────────────────────────────────────────────────────────────
+camera:
+  # "picamera2" for official Pi camera module, "usb" for USB webcam
+  backend: "picamera2"
+  # For USB backend: /dev/video0, /dev/video1, etc.
+  usb_index: 0
+  width: 1280
+  height: 720
+  # Frames per second to capture (lower = less CPU)
+  fps: 2
+  # Save every analysed frame to snapshots/ for later review / training data
+  save_snapshots: true
+  snapshot_dir: "snapshots"
+
+# ── Detection model ──────────────────────────────────────────────────────────
+model:
+  # Path to Obico YOLOv4-tiny ONNX weights.
+  # Download with: python scripts/download_model.py
+  weights: "model/model.onnx"
+  cfg: "model/model.cfg"
+  meta: "model/model.meta"
+  # Confidence threshold (0–1). Lower = more sensitive but more false positives.
+  confidence_threshold: 0.3
+  # Non-maximum suppression overlap threshold
+  nms_threshold: 0.4
+  # Number of consecutive positive detections before triggering action
+  # (debounce – avoids reacting to a single noisy frame)
+  confirm_frames: 3
+  # Force inference on CPU even if a NPU/GPU is available
+  force_cpu: false
+
+# ── Notifications ─────────────────────────────────────────────────────────────
+notifications:
+  # Set to true and fill in webhook to get a POST with the failure details
+  webhook_enabled: false
+  webhook_url: "https://hooks.example.com/your-webhook"
+  # Simple desktop/terminal sound alert
+  beep_on_failure: true
+
+# ── Advisor / LLM ────────────────────────────────────────────────────────────
+advisor:
+  # "gemini" to use the Gemini API, "static" to use the built-in knowledge base
+  backend: "gemini"
+  # Gemini model name – gemini-2.0-flash is free-tier eligible
+  gemini_model: "gemini-2.0-flash"
+  # Set your Gemini API key in config.local.yaml (never commit it)
+  gemini_api_key: ""
+  # How long to wait for the API response before giving up (seconds)
+  timeout_seconds: 30
+  # If Gemini fails or times out, fall back to the static advisor knowledge base
+  fallback_to_static: true
+  # Optional: local directory containing .gcode files transferred from the printer.
+  # If set, PrintGuard will include the last 20 lines of the active gcode file in
+  # the prompt. Leave empty to skip.
+  gcode_dir: ""
+
+# ── Logging ───────────────────────────────────────────────────────────────────
+logging:
+  level: "INFO"          # DEBUG | INFO | WARNING | ERROR
+  log_dir: "logs"
+  # Rotate log file after this many MB
+  max_size_mb: 10

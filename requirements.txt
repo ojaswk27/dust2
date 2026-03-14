@@ -1,0 +1,25 @@
+# PrintGuard dependencies
+# Install with: pip install -r requirements.txt
+
+# Computer vision / ML
+opencv-python-headless>=4.8.0
+numpy>=1.24.0
+
+# Pi camera module (only needed when backend = picamera2)
+# Installed via apt on Pi OS, not pip – see setup.sh
+# picamera2
+
+# Bambu Lab MQTT
+paho-mqtt>=1.6.1
+
+# Config parsing
+PyYAML>=6.0
+
+# LLM advisor – Gemini API
+# Install with: pip install -r requirements.txt
+# Free tier: https://ai.google.dev/
+google-generativeai>=0.8.0
+
+# Type hints backport for Python 3.9
+# (remove if running Python 3.10+)
+# typing-extensions>=4.0

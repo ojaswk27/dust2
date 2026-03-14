@@ -1,0 +1,15 @@
+config.local.yaml
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+logs/
+snapshots/
+model/*.onnx
+model/*.weights
+# pip build artifacts (e.g. from google-generativeai)
+*.egg-info/
+dist/
+build/
+# local gcode files (can be large; printer-specific)
+gcode/
