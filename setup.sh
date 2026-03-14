@@ -9,9 +9,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="$SCRIPT_DIR/.venv"
 MODEL_DIR="$SCRIPT_DIR/model"
-MODEL_URL="https://github.com/TheSpaghettiDetective/obico-server/raw/release/ml_api/model/model.onnx"
-CFG_URL="https://github.com/TheSpaghettiDetective/obico-server/raw/release/ml_api/model/model.cfg"
-META_URL="https://github.com/TheSpaghettiDetective/obico-server/raw/release/ml_api/model/model.meta"
+# The ONNX weights are hosted on S3; the canonical URL is published in the repo
+ONNX_URL_FILE="https://raw.githubusercontent.com/TheSpaghettiDetective/obico-server/release/ml_api/model/model-weights.onnx.url"
+CFG_URL="https://raw.githubusercontent.com/TheSpaghettiDetective/obico-server/release/ml_api/model/model.cfg"
+META_URL="https://raw.githubusercontent.com/TheSpaghettiDetective/obico-server/release/ml_api/model/model.meta"
 
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 info()  { echo -e "${GREEN}[setup]${NC} $*"; }
@@ -59,6 +60,15 @@ download_if_missing() {
     fi
 }
 
+# Resolve the real ONNX weights URL from the repo's pointer file
+info "Resolving Obico model weights URL…"
+MODEL_URL="$(curl -fsSL "$ONNX_URL_FILE" 2>/dev/null || true)"
+if [ -z "$MODEL_URL" ]; then
+    warn "Could not fetch model URL from $ONNX_URL_FILE"
+    warn "Falling back to known S3 URL"
+    MODEL_URL="https://tsd-pub-static.s3.amazonaws.com/ml-models/model-weights-5a6b1be1fa.onnx"
+fi
+
 download_if_missing "$MODEL_URL" "$MODEL_DIR/model.onnx"
 download_if_missing "$CFG_URL"   "$MODEL_DIR/model.cfg"
 download_if_missing "$META_URL"  "$MODEL_DIR/model.meta"
@@ -78,6 +88,8 @@ fi
 mkdir -p "$SCRIPT_DIR/logs" "$SCRIPT_DIR/snapshots"
 
 # ── 6. Optional: install systemd service ────────────────────────────────────
+# systemctl --user requires a D-Bus session, which isn't available under sudo.
+# If running as root/sudo, print instructions instead of trying to enable it.
 SYSTEMD_DIR="$HOME/.config/systemd/user"
 SERVICE_FILE="$SYSTEMD_DIR/printguard.service"
 if [ ! -f "$SERVICE_FILE" ]; then
@@ -100,10 +112,17 @@ StandardError=journal
 [Install]
 WantedBy=default.target
 EOF
-    systemctl --user daemon-reload
-    systemctl --user enable printguard.service
-    info "Service installed. Start with:  systemctl --user start printguard"
-    info "View logs with:               journalctl --user -u printguard -f"
+    if [ "${EUID:-$(id -u)}" -eq 0 ]; then
+        warn "Running as root – skipping 'systemctl --user' (no D-Bus session)."
+        warn "To enable the service, run as your normal user:"
+        warn "   systemctl --user daemon-reload"
+        warn "   systemctl --user enable printguard.service"
+    else
+        systemctl --user daemon-reload
+        systemctl --user enable printguard.service
+        info "Service installed. Start with:  systemctl --user start printguard"
+        info "View logs with:               journalctl --user -u printguard -f"
+    fi
 else
     info "systemd service already exists – not overwriting"
 fi

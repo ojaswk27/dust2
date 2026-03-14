@@ -67,6 +67,7 @@ class BambuMQTTClient:
         self._topic_request = f"device/{self._device_id}/request"
 
         self._client: mqtt.Client = mqtt.Client(
+            mqtt.CallbackAPIVersion.VERSION1,
             client_id=f"printguard_{int(time.time())}",
             protocol=mqtt.MQTTv311,
         )
